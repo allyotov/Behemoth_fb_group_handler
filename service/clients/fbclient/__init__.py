@@ -1,6 +1,6 @@
 
-from service.clients.vkclient.client import FbClient
-from service.clients.vkclient.serializers import Post, Meeting
+from service.clients.fbclient.client import FbClient
+from service.clients.fbclient.serializers import Post, Meeting
 
 
 __all__ = [
