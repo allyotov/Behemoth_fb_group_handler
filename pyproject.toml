@@ -8,6 +8,7 @@ authors = ["Alexander Lyotov <sippie84@gmail.com>"]
 python = "^3.9"
 httpx = "^0.22.0"
 pydantic = "^1.9.0"
+pytz = "^2021.3"
 
 [tool.poetry.dev-dependencies]
 

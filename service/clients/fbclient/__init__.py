@@ -1,10 +1,9 @@
 
-from service.clients.vkclient.client import FbClient
-from service.clients.vkclient.serializers import Post, Meeting
+from service.clients.fbclient.client import FbClient
+from service.clients.fbclient.serializers import NewsItem
 
 
 __all__ = [
     'FbClient',
-    'Post',
-    'Meeting',
+    'NewsItem',
 ]
