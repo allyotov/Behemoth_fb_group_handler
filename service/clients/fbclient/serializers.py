@@ -5,17 +5,7 @@ from pydantic import BaseModel
 
 
 class NewsItem(BaseModel):
-    uid: int
-    title: str
+    id: str
+    updated_time: datetime
+    meeting_time: datetime = None
     text: str
-    time_created: datetime
-    author: str
-
-
-class Meeting(BaseModel):
-    uid: int
-    name: str
-    fragment: str
-    comment: str
-    time: datetime
-    intramural: int
