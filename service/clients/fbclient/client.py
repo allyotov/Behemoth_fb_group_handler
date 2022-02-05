@@ -1,9 +1,10 @@
+from readline import append_history_file
 from tokenize import group
-from typing import Any
+from typing import Any, Tuple
 import httpx
 import logging
 
-from service.clients.fbclient.serializers import Post, Meeting
+from service.clients.fbclient.serializers import Meeting, NewsItem
 from service.config import group_id
 
 logging.basicConfig(level=logging.DEBUG)
@@ -17,7 +18,7 @@ class FbClient:
     def __init__(self, token: str) -> None:
         self.token = token
 
-    def get_posts(self) -> list[Post]:
+    def get_posts(self) -> Tuple[list[NewsItem], list[Meeting]]:
         #since
         data: dict[str, str] = {
             'access_token': self.token,
@@ -35,12 +36,42 @@ class FbClient:
         #     raise Exception
 
         feed = response.json()
-        return feed
+        news, meetings = self._process_feed(feed)
+        return news, meetings
         # return [self._convert_posts(post, owner_id) for post in posts]
+    def _process_feed(self, feed):
+        updates = feed['data']
+        news = []
+        meetings = []
+        for item in updates:
+            if 'message' in item:
+                if item['message'].startswith('Встреча'):
+                    meetings.append({'message': item['message'], 'updated_time': item['updated_time']})
+                else:
+                    news.append({'message': item['message'], 'updated_time': item['updated_time']})
+        return news, meetings
+    
+    def _convert_newsitem(self, post: dict[str, Any], owner_id: int) -> NewsItem:
 
-    def _convert_posts(self, post: dict[str, Any], owner_id: int) -> Post:
-
-        return Post(
+        return NewsItem(
             uid=None,
             text=None,
         )
+
+'''
+class Post(BaseModel):
+    uid: int
+    title: str
+    text: str
+    time_created: datetime
+    author: str
+
+
+class Meeting(BaseModel):
+    uid: int
+    name: str
+    fragment: str
+    comment: str
+    time: datetime
+    intramural: int
+'''

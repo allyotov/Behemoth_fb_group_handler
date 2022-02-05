@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Post(BaseModel):
+class NewsItem(BaseModel):
     uid: int
     title: str
     text: str
