@@ -22,5 +22,9 @@ class BackClient:
                 headers={'content-type': 'application/json'},
             )
             logger.debug('Очередная новость была отправлена в бекенд')
-        except (httpx.ConnectError, httpx.RemoteProtocolError):
+        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
             logger.debug('Не могу отправить сообщения из-за проблем с соединением.')
+            logger.exception(exc)
+
+    def get_newsitem(self, id):
+        return httpx.get(url=f'{self.url}/api/news/', params={'id': id})
