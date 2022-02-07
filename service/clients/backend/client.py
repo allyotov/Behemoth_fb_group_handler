@@ -3,7 +3,7 @@ import logging
 import httpx
 import orjson
 
-from service.clients.backend.serializers import Meeting, Post
+from service.clients.backend.serializers import NewsItem
 
 
 logger = logging.getLogger(__name__)
@@ -14,34 +14,17 @@ class BackClient:
     def __init__(self, url: str) -> None:
         self.url = url
 
-    def send_post(self, post: Post) -> None:
+    def send_newsitem(self, newsitem: NewsItem) -> None:
         try:
             httpx.post(
-                url=f'{self.url}/api/news',
-                content=orjson.dumps(post),
+                url=f'{self.url}/api/news/',
+                content=orjson.dumps(newsitem),
                 headers={'content-type': 'application/json'},
             )
-            logger.debug('new message has been sent to backend')
-        except (httpx.ConnectError, httpx.RemoteProtocolError):
-            logger.debug('Can\'t send message due to connection problem')
-    
-    def send_meeting(self, meeting: Meeting) -> None:
-        try:
-            httpx.post(
-                url=f'{self.url}/api/meetings',
-                content=orjson.dumps(meeting),
-                headers={'content-type': 'application/json'},
-            )
-            logger.debug('new message has been sent to backend')
-        except (httpx.ConnectError, httpx.RemoteProtocolError):
-            logger.debug('Can\'t send message due to connection problem')
+            logger.debug('Очередная новость была отправлена в бекенд')
+        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+            logger.debug('Не могу отправить сообщения из-за проблем с соединением.')
+            logger.exception(exc)
 
-    # def get_group(self):
-    #     try:
-    #         response = httpx.get(f'{self.url}/api/group/')
-    #         group = response.json()
-    #         logger.debug('Group config has been recieved')
-    #     except (httpx.ConnectError, httpx.RemoteProtocolError):
-    #         logger.debug('Can\'t recieve group config due to connection problem')
-    #         return None
-    #     return group
+    def get_newsitem(self, id):
+        return httpx.get(url=f'{self.url}/api/news/', params={'id': id})

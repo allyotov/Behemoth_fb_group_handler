@@ -36,7 +36,7 @@ class FbClient:
     def __init__(self, token: str) -> None:
         self.token = token
 
-    def get_posts(self) -> list[NewsItem]:
+    def get_newsitems(self) -> list[NewsItem]:
         #since
         data: dict[str, str] = {
             'access_token': self.token,

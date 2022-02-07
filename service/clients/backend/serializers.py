@@ -4,19 +4,8 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Post:
-    uid: int
-    title: str
+class NewsItem:
+    id: str
     text: str
-    time_created: str
-    author: str
-
-
-@dataclass
-class Meeting:
-    uid: int
-    name: str
-    fragment: str
-    comment: str
-    time: str
-    intramural: int
+    updated_time: datetime
+    meeting_time: datetime = None
