@@ -4,6 +4,8 @@ import time
 from pprint import pprint
 from datetime import datetime, timedelta
 
+import pytz
+
 from service.clients import fbclient, backend 
 from service.config import access_token, backend_url, time_delay
 
@@ -20,11 +22,12 @@ class Worker:
     def work(self) -> None:
         while True:
             try:
-                fresh_newsitems = self.fb.get_newsitems()
+                fresh_newsitems = self.fb.get_newsitems(latest_prev_news_date=self._latest_newsitem_date())
+                logger.debug('Количество новых записей: %s' % len(fresh_newsitems))
             except Exception:
                 raise
 
-            pprint(fresh_newsitems)
+            # pprint(fresh_newsitems)
             
             for newsitem in fresh_newsitems:
                 saved_newsitem = self._convert_newsitem(newsitem)
@@ -32,6 +35,7 @@ class Worker:
                 logger.debug('Забираем из бекенда новости по ид')
                 news_from_backend = self.backend.get_newsitem(saved_newsitem.id).json()
                 if len(news_from_backend) == 0:
+                    logger.debug('Новости с таким id в бекенде нет. Отправляем её в бекенд.')
                     self.backend.send_newsitem(saved_newsitem)
                 else:
                     old_newsitem_dict = news_from_backend[0]
@@ -43,14 +47,6 @@ class Worker:
                     else:
                         logger.debug('Новость изменилась')
                         self.backend.edit_newsitem(saved_newsitem)
-                    # if saved_newsitem.meeting_time != old_newsitem['meeting_time'] or \
-                    #     saved_newsitem.updated_time != old_newsitem['updated_time'] or \
-                    #     saved_newsitem.text != old_newsitem['text']:
-                    #     logger.debug('Изменилась новость, будем менять в базе.')
-                    #     logger.debug(type(saved_newsitem.meeting_time))
-                    #     logger.debug(type(old_newsitem['meeting_time']))
-                    # else:
-                    #     logger.debug('Новость не изменилась, оставляем как есть')
             break
             time.sleep(random.randrange(3, 10))
             logger.debug('I am waiting in 5 minutes to make a new query')
@@ -72,7 +68,7 @@ class Worker:
         if newsitem.updated_time - old_newsitem.updated_time != timedelta(seconds=0):
             logger.debug('Дата изменения обновилась')
             return False
-        if (type(newsitem.meeting_time) is type(old_newsitem.meeting_time) is None):
+        if (newsitem.meeting_time is old_newsitem.meeting_time is None):
             logger.debug('Новость по-прежнему не встреча')
         elif (type(newsitem.meeting_time) is type(old_newsitem.meeting_time) is datetime):
             if newsitem.meeting_time - old_newsitem.meeting_time != timedelta(seconds=0):
@@ -82,4 +78,23 @@ class Worker:
             logger.debug('Новость стала/перестала быть встречей')
             return False
         return True
+
+    def _latest_newsitem_date(self):
+        logger.debug('Latest newsitem date')
+        news_from_backend = self.backend.get_latest_newsitem().json()
+        if len(news_from_backend) == 0:
+            logger.debug('Empty newsitem list')
+            return None
+        else:
+            old_newsitem_dict = news_from_backend[0]
+            latest_item = fbclient.NewsItem.parse_obj(old_newsitem_dict)
+            latest_update = latest_item.updated_time
+            logger.debug(latest_update)
+            latest_update_utc = latest_update.astimezone(pytz.utc)
+            logger.debug(latest_update_utc)
+            logger.debug('Успешно получили дату сохранённой новости!')
+            unix_timestamp = time.mktime(latest_item.updated_time.timetuple())
+            # 2022-02-08T15:04:20+0000
+
+            return latest_update_utc.strftime("%Y-%m-%dT%H:%M:%S+0000")
             
