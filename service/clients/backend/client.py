@@ -17,13 +17,14 @@ class BackClient:
 
     def send_newsitem(self, newsitem: NewsItem) -> None:
         try:
-            httpx.post(
+            r = httpx.post(
                 url=f'{self.url}/api/news/',
                 content=orjson.dumps(newsitem),
                 headers={'content-type': 'application/json'},
             )
+            r.raise_for_status()
             logger.debug('Очередная новость была отправлена в бекенд')
-        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+        except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
             logger.debug('Не могу отправить новости из-за проблем с соединением.')
             logger.exception(exc)
 
@@ -31,7 +32,7 @@ class BackClient:
         try:
             return httpx.get(url=f'{self.url}/api/news/', params={'id': id})
         except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
-            logger.debug('Не могу отправить сообщения из-за проблем с соединением.')
+            logger.debug('Не могу получить сообщения из-за проблем с соединением.')
             logger.exception(exc)
 
     def edit_newsitem(self, newsitem: NewsItem):
@@ -47,4 +48,11 @@ class BackClient:
             logger.debug('Очередная новость была изменена в бекенде')
         except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
             logger.debug('Не могу отредактировать новость из-за проблем с соединением.')
+            logger.exception(exc)
+
+    def get_latest_newsitem(self):
+        try:
+            return httpx.get(url=f'{self.url}/api/news/', params={'latest': True})
+        except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
+            logger.debug('Не могу получить сообщения из-за проблем с соединением.')
             logger.exception(exc)

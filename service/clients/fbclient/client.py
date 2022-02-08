@@ -36,11 +36,13 @@ class FbClient:
     def __init__(self, token: str) -> None:
         self.token = token
 
-    def get_newsitems(self) -> list[NewsItem]:
+    def get_newsitems(self, latest_prev_news_date: str) -> list[NewsItem]:
         #since
         data: dict[str, str] = {
             'access_token': self.token,
         }
+        if latest_prev_news_date:
+            data['since'] = latest_prev_news_date
 
         response = httpx.get(self.group_url, params=data)
         response.raise_for_status()
