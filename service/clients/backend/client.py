@@ -1,4 +1,5 @@
 import logging
+from pprint import pprint
 
 import httpx
 import orjson
@@ -23,8 +24,27 @@ class BackClient:
             )
             logger.debug('Очередная новость была отправлена в бекенд')
         except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
-            logger.debug('Не могу отправить сообщения из-за проблем с соединением.')
+            logger.debug('Не могу отправить новости из-за проблем с соединением.')
             logger.exception(exc)
 
     def get_newsitem(self, id):
-        return httpx.get(url=f'{self.url}/api/news/', params={'id': id})
+        try:
+            return httpx.get(url=f'{self.url}/api/news/', params={'id': id})
+        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+            logger.debug('Не могу отправить сообщения из-за проблем с соединением.')
+            logger.exception(exc)
+
+    def edit_newsitem(self, newsitem: NewsItem):
+        try:
+            data=orjson.dumps(newsitem)
+            pprint(data)
+            resp = httpx.put(
+                url=f'{self.url}/api/news/{newsitem.id}/',
+                data=data,
+                headers={'content-type': 'application/json'},
+            )
+            resp.raise_for_status()
+            logger.debug('Очередная новость была изменена в бекенде')
+        except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
+            logger.debug('Не могу отредактировать новость из-за проблем с соединением.')
+            logger.exception(exc)
