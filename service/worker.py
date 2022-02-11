@@ -6,8 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from service.clients import fbclient, backend 
-from service.config import access_token, backend_url, time_delay
-from config import default_check_start
+from service.config import access_token, backend_url, time_delay, default_check_start
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ class Worker:
                     else:
                         logger.debug('Новость изменилась')
                         self.backend.edit_newsitem(saved_newsitem)
-            
+            break
             time.sleep(random.randrange(3, 10))
             logger.debug('Ждём перед повторной проверкой.')
             time.sleep(self.delay)
