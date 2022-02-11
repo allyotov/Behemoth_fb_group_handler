@@ -1,5 +1,4 @@
 import logging
-from pprint import pprint
 
 import httpx
 import orjson
@@ -40,7 +39,6 @@ class BackClient:
     def edit_newsitem(self, newsitem: NewsItem):
         try:
             data=orjson.dumps(newsitem)
-            pprint(data)
             resp = httpx.put(
                 url=f'{self.url}/api/news/{newsitem.id}/',
                 data=data,

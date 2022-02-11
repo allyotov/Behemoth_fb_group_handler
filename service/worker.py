@@ -1,12 +1,14 @@
 import logging
 import random
+import string
 import time
 from datetime import datetime, timedelta
 
 import pytz
 import sentry_sdk
 
-from service.clients import fbclient, backend 
+from service.clients import fbclient, backend
+from service.clients.backend.serializers import NewsItem 
 from service.config import access_token, backend_url, time_delay, default_check_start, sentry_dsn
 
 
@@ -40,6 +42,8 @@ class Worker:
                 continue
             except PermissionError as exc:
                 self._send_fb_no_reply_newsitem(exc)
+                logger.debug('Жду перед повторной проверкой группы соцсети.')
+                time.sleep(self.delay * 2 + random.randrange(3, 10))
                 continue
             
             self.fb_error_newsitem_sent = False
@@ -135,10 +139,22 @@ class Worker:
         logger.debug('Повторяю попытку запроса к бекэнду.')
 
     def _send_fb_no_reply_newsitem(self, exc):
-        if self.fb_error_newsitem_sent:
-            return 
+        def id_generator(size=10, chars=string.ascii_lowercase + string.digits):
+            return 'fb_error_' + ''.join(random.choice(chars) for _ in range(size))
         logger.exception(exc)
-        fb_no_reply_newsitem = None
+        
+        if self.fb_error_newsitem_sent:
+            logger.debug('Новость об ошибке соединения с фб уже была отправлена.')
+            return 
+        
+        logger.debug('Направляем новость об ошибке соединия с фб в бекэнд.')
+        
+        fb_no_reply_newsitem = NewsItem(**{
+                                'id': id_generator(), 
+                                'meeting_time': None, 
+                                'updated_time': datetime.now(), 
+                                'text': 'Бот потерял связь с фейсбуком. Работаем над устранением этой неполадки.'
+                            })
         self.fb_error_newsitem_sent = True
         while True: 
             try:
@@ -146,3 +162,4 @@ class Worker:
                 break
             except ConnectionError as exc:
                 self._wait_to_request_backend(exc)
+

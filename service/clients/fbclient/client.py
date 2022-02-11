@@ -10,7 +10,7 @@ from service.config import group_id
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-FB_GROUPS_URL='https://graphz.facebook.com/v12.0/{}/feed'
+FB_GROUPS_URL='https://graph.facebook.com/v12.0/{}/feed'
 
 MONTHS = {
     'января': '01',
@@ -45,7 +45,7 @@ class FbClient:
         try:
             response = httpx.get(self.group_url, params=data)
             response.raise_for_status()
-        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+        except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
             logger.debug('Не могу получить сообщения из соцсети из-за проблем с соединением.')
             logger.exception(exc)
             raise PermissionError('Can\'t connect to the social network.')
