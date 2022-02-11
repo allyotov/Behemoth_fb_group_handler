@@ -1,13 +1,14 @@
 import logging
 import random
 import time
-from pprint import pprint
 from datetime import datetime, timedelta
 
 import pytz
 
 from service.clients import fbclient, backend 
 from service.config import access_token, backend_url, time_delay
+from config import default_check_start
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,9 @@ class Worker:
         news_from_backend = self.backend.get_latest_newsitem().json()
         if len(news_from_backend) == 0:
             logger.debug('Empty newsitem list')
-            return None
+            logger.debug('БД бекенда пока пуста. Берем дефолтную дату начала проверки')
+            logger.debug(default_check_start)
+            return default_check_start
         else:
             old_newsitem_dict = news_from_backend[0]
             latest_item = fbclient.NewsItem.parse_obj(old_newsitem_dict)
