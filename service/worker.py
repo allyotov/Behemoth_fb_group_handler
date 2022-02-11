@@ -4,9 +4,10 @@ import time
 from datetime import datetime, timedelta
 
 import pytz
+import sentry_sdk
 
 from service.clients import fbclient, backend 
-from service.config import access_token, backend_url, time_delay, default_check_start
+from service.config import access_token, backend_url, time_delay, default_check_start, sentry_dsn
 
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,11 @@ logger = logging.getLogger(__name__)
 class Worker:
 
     def __init__(self) -> None:
+        sentry_sdk.init(
+            sentry_dsn,
+            traces_sample_rate=1.0
+        )
+
         self.fb = fbclient.FbClient(access_token)
         self.backend = backend.BackClient(backend_url)
         self.delay = int(time_delay)
@@ -45,7 +51,7 @@ class Worker:
                     else:
                         logger.debug('Новость изменилась')
                         self.backend.edit_newsitem(saved_newsitem)
-            break
+
             time.sleep(random.randrange(3, 10))
             logger.debug('Ждём перед повторной проверкой.')
             time.sleep(self.delay)
