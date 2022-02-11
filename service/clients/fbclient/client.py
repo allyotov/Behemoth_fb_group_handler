@@ -1,8 +1,6 @@
 from datetime import datetime
 from pytz import timezone
-from readline import append_history_file
-from tokenize import group
-from typing import Any, Tuple
+from typing import Any
 import httpx
 import logging
 
@@ -12,7 +10,7 @@ from service.config import group_id
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-FB_GROUPS_URL='https://graph.facebook.com/v12.0/{}/feed'
+FB_GROUPS_URL='https://graphz.facebook.com/v12.0/{}/feed'
 
 MONTHS = {
     'января': '01',
@@ -37,16 +35,20 @@ class FbClient:
         self.token = token
 
     def get_newsitems(self, latest_prev_news_date: str) -> list[NewsItem]:
-        #since
+
         data: dict[str, str] = {
             'access_token': self.token,
         }
         if latest_prev_news_date:
             data['since'] = latest_prev_news_date
 
-        response = httpx.get(self.group_url, params=data)
-        response.raise_for_status()
-        logger.debug('\n\n\n\n\n')
+        try:
+            response = httpx.get(self.group_url, params=data)
+            response.raise_for_status()
+        except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+            logger.debug('Не могу получить сообщения из соцсети из-за проблем с соединением.')
+            logger.exception(exc)
+            raise PermissionError('Can\'t connect to the social network.')
 
         feed = response.json()
         news = self._process_feed(feed)

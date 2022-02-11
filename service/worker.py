@@ -24,16 +24,25 @@ class Worker:
         self.fb = fbclient.FbClient(access_token)
         self.backend = backend.BackClient(backend_url)
         self.delay = int(time_delay)
+        self.fb_error_newsitem_sent = False
 
     def work(self) -> None:
         while True:
             try:
                 fresh_newsitems = self.fb.get_newsitems(latest_prev_news_date=self._latest_newsitem_date())
                 logger.debug('Количество новых записей: %s' % len(fresh_newsitems))
+                if not fresh_newsitems:
+                    logger.debug('Cвежих новостей нет. Жду перед повторной проверкой группы соцсети.')
+                    time.sleep(self.delay + random.randrange(3, 10))
+                    continue
             except ConnectionError as exc:
                 self._wait_to_request_backend(exc)
                 continue
+            except PermissionError as exc:
+                self._send_fb_no_reply_newsitem(exc)
+                continue
             
+            self.fb_error_newsitem_sent = False
             for newsitem in fresh_newsitems:
                 saved_newsitem = self._convert_newsitem(newsitem)
 
@@ -124,3 +133,16 @@ class Worker:
         logger.debug('Не могу получить ответ от бекэнда, жду и повторяю попытку запроса.')
         time.sleep(self.delay * 2)
         logger.debug('Повторяю попытку запроса к бекэнду.')
+
+    def _send_fb_no_reply_newsitem(self, exc):
+        if self.fb_error_newsitem_sent:
+            return 
+        logger.exception(exc)
+        fb_no_reply_newsitem = None
+        self.fb_error_newsitem_sent = True
+        while True: 
+            try:
+                self.backend.send_newsitem(fb_no_reply_newsitem)
+                break
+            except ConnectionError as exc:
+                self._wait_to_request_backend(exc)
