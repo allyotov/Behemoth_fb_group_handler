@@ -26,8 +26,6 @@ class Worker:
                 logger.debug('Количество новых записей: %s' % len(fresh_newsitems))
             except Exception:
                 raise
-
-            # pprint(fresh_newsitems)
             
             for newsitem in fresh_newsitems:
                 saved_newsitem = self._convert_newsitem(newsitem)
@@ -47,9 +45,9 @@ class Worker:
                     else:
                         logger.debug('Новость изменилась')
                         self.backend.edit_newsitem(saved_newsitem)
-            break
+            
             time.sleep(random.randrange(3, 10))
-            logger.debug('I am waiting in 5 minutes to make a new query')
+            logger.debug('Ждём перед повторной проверкой.')
             time.sleep(self.delay)
             
 
@@ -93,8 +91,5 @@ class Worker:
             latest_update_utc = latest_update.astimezone(pytz.utc)
             logger.debug(latest_update_utc)
             logger.debug('Успешно получили дату сохранённой новости!')
-            unix_timestamp = time.mktime(latest_item.updated_time.timetuple())
-            # 2022-02-08T15:04:20+0000
 
             return latest_update_utc.strftime("%Y-%m-%dT%H:%M:%S+0000")
-            
