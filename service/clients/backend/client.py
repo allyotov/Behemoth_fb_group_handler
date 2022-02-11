@@ -27,6 +27,7 @@ class BackClient:
         except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
             logger.debug('Не могу отправить новости из-за проблем с соединением.')
             logger.exception(exc)
+            raise ConnectionError('Can\'t connect to backend.')
 
     def get_newsitem(self, id):
         try:
@@ -34,6 +35,7 @@ class BackClient:
         except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
             logger.debug('Не могу получить сообщения из-за проблем с соединением.')
             logger.exception(exc)
+            raise ConnectionError('Can\'t connect to backend.')
 
     def edit_newsitem(self, newsitem: NewsItem):
         try:
@@ -49,6 +51,7 @@ class BackClient:
         except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
             logger.debug('Не могу отредактировать новость из-за проблем с соединением.')
             logger.exception(exc)
+            raise ConnectionError('Can\'t connect to backend.')
 
     def get_latest_newsitem(self):
         try:
@@ -56,3 +59,4 @@ class BackClient:
         except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.HTTPStatusError) as exc:
             logger.debug('Не могу получить сообщения из-за проблем с соединением.')
             logger.exception(exc)
+            raise ConnectionError('Can\'t connect to backend.')

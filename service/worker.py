@@ -30,17 +30,30 @@ class Worker:
             try:
                 fresh_newsitems = self.fb.get_newsitems(latest_prev_news_date=self._latest_newsitem_date())
                 logger.debug('Количество новых записей: %s' % len(fresh_newsitems))
-            except Exception:
-                raise
+            except ConnectionError as exc:
+                self._wait_to_request_backend(exc)
+                continue
             
             for newsitem in fresh_newsitems:
                 saved_newsitem = self._convert_newsitem(newsitem)
 
                 logger.debug('Забираем из бекенда новости по ид')
-                news_from_backend = self.backend.get_newsitem(saved_newsitem.id).json()
+                
+                while True: 
+                    try:
+                        news_from_backend = self.backend.get_newsitem(saved_newsitem.id).json()
+                        break
+                    except ConnectionError as exc:
+                        self._wait_to_request_backend(exc)
+                
                 if len(news_from_backend) == 0:
                     logger.debug('Новости с таким id в бекенде нет. Отправляем её в бекенд.')
-                    self.backend.send_newsitem(saved_newsitem)
+                    while True: 
+                        try:
+                            self.backend.send_newsitem(saved_newsitem)
+                            break
+                        except ConnectionError as exc:
+                            self._wait_to_request_backend(exc)
                 else:
                     old_newsitem_dict = news_from_backend[0]
                     old_newsitem = fbclient.NewsItem.parse_obj(old_newsitem_dict)
@@ -50,11 +63,15 @@ class Worker:
                         logger.debug('Новость не изменилась!!!')
                     else:
                         logger.debug('Новость изменилась')
-                        self.backend.edit_newsitem(saved_newsitem)
+                        while True: 
+                            try:
+                                self.backend.edit_newsitem(saved_newsitem)
+                                break
+                            except ConnectionError as exc:
+                                self._wait_to_request_backend(exc)
 
-            time.sleep(random.randrange(3, 10))
-            logger.debug('Ждём перед повторной проверкой.')
-            time.sleep(self.delay)
+            logger.debug('Жду перед повторной проверкой группы соцсети.')
+            time.sleep(self.delay + random.randrange(3, 10))
             
 
     def _convert_newsitem(self, newsitem: fbclient.NewsItem) -> backend.NewsItem:
@@ -101,3 +118,9 @@ class Worker:
             logger.debug('Успешно получили дату сохранённой новости!')
 
             return latest_update_utc.strftime("%Y-%m-%dT%H:%M:%S+0000")
+
+    def _wait_to_request_backend(self, exc):
+        logger.exception(exc)
+        logger.debug('Не могу получить ответ от бекэнда, жду и повторяю попытку запроса.')
+        time.sleep(self.delay * 2)
+        logger.debug('Повторяю попытку запроса к бекэнду.')
