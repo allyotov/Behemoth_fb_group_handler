@@ -68,7 +68,7 @@ class FbClient:
         return [self._convert_newsitem(newsitem) for newsitem in news]
 
     def _process_message(self, msg: str) -> datetime or None:
-        if not msg.startswith('+Встреча'):
+        if not msg.startswith('Встреча'):
             return None, msg
         msg_lines = msg.split('\n')
         first_line = msg_lines[0]
