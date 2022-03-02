@@ -52,7 +52,6 @@ class FbClient:
 
         feed = response.json()
         news = self._process_feed(feed)
-
         return news
 
     def _process_feed(self, feed):
