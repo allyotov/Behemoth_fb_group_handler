@@ -125,6 +125,7 @@ class Worker:
             old_newsitem_dict = news_from_backend[0]
             latest_item = fbclient.NewsItem.parse_obj(old_newsitem_dict)
             latest_update = latest_item.updated_time
+            logger.debug('Дата последней сохранённой новости')
             logger.debug(latest_update)
             latest_update_utc = latest_update.astimezone(pytz.utc)
             logger.debug(latest_update_utc)
